@@ -1,0 +1,29 @@
+# 缓存目录，如果出现无法调用云厂商 API 的情况，缓存数据可以尽可能确保服务可用
+# cache_dir 路径是相对于 config.yml 文件的，与当前工作目录无关
+cache_dir: /tmp/cache
+# 根域名
+origin: infra
+# TTL
+ttl: 10
+# 云厂商
+clouds:
+  # 名称，当前仅用于日志输出
+  - name: 'Pagoda QCLOUD'
+    # 厂商，支持厂商列表参见 README.md
+    provider: qcloud
+    # API 令牌
+    token_id: xxxxxxxxxxxx
+    token_secret: xxxxxxxxxxxx
+    # 可用区，必须填写，一次性扫描全部可用区代价太高
+    # 注意，不同厂商可用区标识命名规范不同，参见各个厂商的文档
+    regions:
+      - ap-guangzhou
+    # 私有网络列表，必须填写，避免扫描到不应该扫描到的私有网络
+    # 注意，不同厂商私有网络标识命名规范不同，参见各个厂商的文档
+    networks:
+      - vpc-xxxxx
+    # 要扫描的服务，必须填写，一次性扫描全部服务代价太高
+    # 注意，不同厂商服务标识命名不同，参见 README.md
+    services:
+      - cvm
+      - cdb

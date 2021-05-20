@@ -2,6 +2,8 @@
 
 一个用 Go 写的工具，用于从多个云厂商获取服务信息（包括云主机，内网负载均衡，云数据等），最终生成 DNS Zone 文件，用于搭建内网 DNS
 
+**注意：开发尚未完成**
+
 ## 关键设计
 
 **`unizone` 不会构建任何形式的命名空间**
@@ -37,6 +39,17 @@ mysql-b.infra
 那么，把一个服务从厂商 A 迁移到厂商 B，从一个 VPC 移动到另一个 VPC，从 自建服务 切换到 托管服务，都是零成本的。
 
 **你唯一需要做的事情就是，打通网络，并制定一个命名规范，避免冲突即可**
+
+## 使用方法
+
+```text
+Usage of unizone
+  -c string
+        configuration file
+  -o string
+        output zone file
+  -v    enable verbose logging
+```
 
 ## 支持厂商
 

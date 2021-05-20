@@ -1,0 +1,15 @@
+cache_dir: cache
+origin: infra1
+ttl: 23
+clouds:
+  - name: 'Fake'
+    provider: fake
+    token_id: xxxxxxxxxxxx
+    token_secret: xxxxxxxxxxxx
+    regions:
+      - ap-guangzhou
+    networks:
+      - vpc-xxxxx
+    services:
+      - cvm
+      - cdb
