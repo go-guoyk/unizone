@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"go.guoyk.net/sugar/sugar_zap"
 	"go.guoyk.net/unizone/pkg/providers"
@@ -21,11 +20,11 @@ func main() {
 	)
 
 	flag.BoolVar(&optVerbose, "v", false, "enable verbose logging")
-	flag.StringVar(&optConf, "c", "", "configuration file")
-	flag.StringVar(&optOutput, "o", "", "output zone file")
+	flag.StringVar(&optConf, "c", "unizone.yml", "configuration file")
+	flag.StringVar(&optOutput, "o", "unizone.zone", "output dns zone file")
 	flag.Parse()
 
-	log := createLogger(optVerbose)
+	log := NewLogger(optVerbose)
 
 	var err error
 	defer func(err *error) {
@@ -35,20 +34,8 @@ func main() {
 		}
 	}(&err)
 
-	if optConf == "" {
-		err = errors.New("missing argument -c")
-		log.Error(err.Error())
-		return
-	}
-
-	if optOutput == "" {
-		err = errors.New("missing argument -o")
-		log.Error(err.Error())
-		return
-	}
-
 	var cfg Config
-	if cfg, err = loadConfig(optConf); err != nil {
+	if err = LoadConfigFile(optConf, &cfg); err != nil {
 		log.Errorf("failed to load config file: %s, %s", optConf, err.Error())
 		return
 	}
