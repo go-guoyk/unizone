@@ -3,14 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"go.guoyk.net/sugar/sugar_zap"
 	"go.guoyk.net/unizone/pkg/providers"
+	"log"
 	"os"
-	"path/filepath"
-	"strings"
 )
-
-const PrefixCached = "CACHED "
 
 func main() {
 	var (
@@ -24,89 +20,65 @@ func main() {
 	flag.StringVar(&optOutput, "o", "unizone.zone", "output dns zone file")
 	flag.Parse()
 
-	log := NewLogger(optVerbose)
-
 	var err error
 	defer func(err *error) {
-		_ = log.Sync()
 		if *err != nil {
+			log.Println("exited with error:", (*err).Error())
 			os.Exit(1)
+		} else {
+			log.Println("exited")
 		}
 	}(&err)
 
 	var cfg Config
 	if err = LoadConfigFile(optConf, &cfg); err != nil {
-		log.Errorf("failed to load config file: %s, %s", optConf, err.Error())
 		return
 	}
 
-	cacheDir := filepath.Join(filepath.Dir(optConf), cfg.CacheDir)
+	log.Println("configuration loaded")
 
-	var services []providers.Service
+	var records []providers.Record
 
-	for _, cloud := range cfg.Clouds {
-		for _, region := range cloud.Regions {
+	for _, cloud := range cfg.Providers {
+		log.Println("inspecting provider:", cloud.ID)
+		for _, network := range cloud.Networks {
+			log.Println("inspecting network:", cloud.ID, network.Region, network.ID)
 			var provider providers.Provider
 			if provider, err = providers.Create(cloud.Provider, providers.Options{
+				ID:          cloud.ID,
 				TokenID:     cloud.TokenID,
 				TokenSecret: cloud.TokenSecret,
-				Region:      region,
-				Logger:      sugar_zap.Wrap(log.With("cloud", cloud.Name, "region", region).Desugar()),
+				Region:      network.Region,
 			}); err != nil {
-				log.Warnf("failed to create provider: %s (%s/%s), %s", cloud.Name, cloud.Provider, region, err.Error())
-				err = nil
-				continue
+				return
 			}
-			for _, network := range cloud.Networks {
-				for _, service := range cloud.Services {
-					var cloudServices []providers.Service
-					if cloudServices, err = provider.ListServices(context.Background(), network, service); err != nil {
-						log.Warnf("failed to list services: %s (%s/%s) %s/%s, %s", cloud.Name, cloud.Provider, region, network, service, err.Error())
-						err = nil
-						continue
-					}
-				outerLoop1:
-					for _, cloudService := range cloudServices {
-						for _, knownService := range services {
-							if knownService.Name == cloudService.Name {
-								log.Warnf("found duplicated service name: %s (%s/%s) %s/%s/%s, %s (%s) vs %s", cloud.Name, cloud.Provider, region, network, service, cloudService.Name, cloudService.IP, knownService.Comment, err.Error())
-								continue outerLoop1
-							}
+			for _, service := range cloud.Services {
+				log.Println("inspecting service:", cloud.ID, network.Region, network.ID, service)
+				var cloudRecords []providers.Record
+				if cloudRecords, err = provider.ListRecords(context.Background(), network.ID, service); err != nil {
+					return
+				}
+			outerLoop1:
+				for _, cloudRecord := range cloudRecords {
+					for _, knownRecord := range records {
+						if knownRecord.Name == cloudRecord.Name {
+							log.Println(
+								"found duplicated record:",
+								cloud.ID,
+								network.Region,
+								network.ID,
+								service,
+								cloudRecord.Name,
+							)
+							continue outerLoop1
 						}
-						log.Debugf("found service: %s (%s) %s/%s/%s (%s)", cloud.Name, cloud.Provider, network, services, cloudService.Name, cloudService.IP)
-						services = append(services, cloudService)
 					}
+					if optVerbose {
+						log.Println("found record:", cloud.ID, network.Region, network.ID, service, cloudRecord.Name)
+					}
+					records = append(records, cloudRecord)
 				}
 			}
 		}
-	}
-
-	var cachedServices []providers.Service
-	if cachedServices, err = loadCachedServices(cacheDir); err != nil {
-		log.Errorf("failed to load cached services from dir: %s, %s", cacheDir, err.Error())
-		return
-	}
-
-outerLoop2:
-	for _, cachedService := range cachedServices {
-		for _, knownService := range services {
-			if knownService.Name == cachedService.Name {
-				continue outerLoop2
-			}
-		}
-		log.Warnf("cached service appended: %s %s (%s)", cachedService.Comment, cachedService.Name, cachedService.IP)
-		if !strings.HasPrefix(cachedService.Comment, PrefixCached) {
-			cachedService.Comment = PrefixCached + cachedService.Comment
-		}
-		services = append(services, cachedService)
-	}
-
-	if err = saveCachedServices(services, cacheDir); err != nil {
-		log.Errorf("failed to save services to cache dir: %s, %s", cacheDir, err.Error())
-		return
-	}
-
-	if err = writeZoneFile(services, optOutput); err != nil {
-		return
 	}
 }

@@ -3,7 +3,6 @@ package providers
 import (
 	"context"
 	"errors"
-	"go.guoyk.net/sugar"
 	"sync"
 )
 
@@ -38,20 +37,20 @@ func Create(name string, opts Options) (Provider, error) {
 }
 
 type Options struct {
+	ID          string
 	Region      string
 	TokenID     string
 	TokenSecret string
-	Logger      sugar.Logger
 }
 
-type Service struct {
+type Record struct {
 	Name    string
 	IP      string
 	Comment string
 }
 
 type Provider interface {
-	ListServices(ctx context.Context, network string, service string) ([]Service, error)
+	ListRecords(ctx context.Context, network string, service string) ([]Record, error)
 }
 
 type Registration interface {

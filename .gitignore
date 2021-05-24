@@ -17,5 +17,6 @@
 # GoLand
 .idea/
 
-# Executable
+# Specified
 /unizone
+*.zone
