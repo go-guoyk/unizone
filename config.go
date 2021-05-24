@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"strings"
 )
 
 type Config struct {
@@ -34,6 +35,12 @@ func LoadConfigFile(file string, cfg *Config) (err error) {
 	if cfg.Origin == "" {
 		err = errors.New("missing 'origin' field")
 		return
+	}
+	if strings.HasPrefix(cfg.Origin, ".") {
+		cfg.Origin = strings.TrimPrefix(cfg.Origin, ".")
+	}
+	if !strings.HasSuffix(cfg.Origin, ".") {
+		cfg.Origin = cfg.Origin + "."
 	}
 	if cfg.TTL < 0 {
 		err = errors.New("invalid 'ttl' field")
