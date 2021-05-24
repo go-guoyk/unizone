@@ -37,7 +37,7 @@ func Create(name string, opts Options) (Provider, error) {
 }
 
 type Options struct {
-	ID          string
+	Name        string
 	Region      string
 	TokenID     string
 	TokenSecret string

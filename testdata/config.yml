@@ -1,7 +1,7 @@
 origin: infra1
 ttl: 23
 providers:
-  - id: 'Fake'
+  - name: 'Fake'
     provider: fake
     token_id: xxxxxxxxxxxx
     token_secret: xxxxxxxxxxxx

@@ -12,12 +12,10 @@ func main() {
 	var (
 		optVerbose bool
 		optConf    string
-		optOutput  string
 	)
 
 	flag.BoolVar(&optVerbose, "v", false, "enable verbose logging")
 	flag.StringVar(&optConf, "c", "unizone.yml", "configuration file")
-	flag.StringVar(&optOutput, "o", "unizone.zone", "output dns zone file")
 	flag.Parse()
 
 	var err error
@@ -40,12 +38,12 @@ func main() {
 	var records []providers.Record
 
 	for _, cloud := range cfg.Providers {
-		log.Println("inspecting provider:", cloud.ID)
+		log.Println("inspecting provider:", cloud.Name)
 		for _, network := range cloud.Networks {
-			log.Println("inspecting network:", cloud.ID, network.Region, network.ID)
+			log.Println("inspecting network:", cloud.Name, network.Region, network.ID)
 			var provider providers.Provider
 			if provider, err = providers.Create(cloud.Provider, providers.Options{
-				ID:          cloud.ID,
+				Name:        cloud.Name,
 				TokenID:     cloud.TokenID,
 				TokenSecret: cloud.TokenSecret,
 				Region:      network.Region,
@@ -53,18 +51,19 @@ func main() {
 				return
 			}
 			for _, service := range cloud.Services {
-				log.Println("inspecting service:", cloud.ID, network.Region, network.ID, service)
+				log.Println("inspecting service:", cloud.Name, network.Region, network.ID, service)
 				var cloudRecords []providers.Record
 				if cloudRecords, err = provider.ListRecords(context.Background(), network.ID, service); err != nil {
 					return
 				}
+				log.Printf("found %d records", len(cloudRecords))
 			outerLoop1:
 				for _, cloudRecord := range cloudRecords {
 					for _, knownRecord := range records {
 						if knownRecord.Name == cloudRecord.Name {
 							log.Println(
 								"found duplicated record:",
-								cloud.ID,
+								cloud.Name,
 								network.Region,
 								network.ID,
 								service,
@@ -74,7 +73,7 @@ func main() {
 						}
 					}
 					if optVerbose {
-						log.Println("found record:", cloud.ID, network.Region, network.ID, service, cloudRecord.Name)
+						log.Println("found record:", cloud.Name, network.Region, network.ID, service, cloudRecord.Name)
 					}
 					records = append(records, cloudRecord)
 				}

@@ -11,7 +11,7 @@ type Config struct {
 	Origin    string `yaml:"origin"`
 	TTL       int    `yaml:"ttl"`
 	Providers []struct {
-		ID          string `yaml:"id"`
+		Name        string `yaml:"name"`
 		Provider    string `yaml:"provider"`
 		TokenID     string `yaml:"token_id"`
 		TokenSecret string `yaml:"token_secret"`
@@ -44,8 +44,8 @@ func LoadConfigFile(file string, cfg *Config) (err error) {
 		return
 	}
 	for i, pvd := range cfg.Providers {
-		if pvd.ID == "" {
-			err = fmt.Errorf("missing 'id' field in providers.%d", i+1)
+		if pvd.Name == "" {
+			err = fmt.Errorf("missing 'name' field in providers.%d", i+1)
 			return
 		}
 		if pvd.Provider == "" {
